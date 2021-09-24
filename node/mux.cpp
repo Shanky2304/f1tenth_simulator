@@ -123,6 +123,12 @@ public:
         n.getParam("nav_mux_idx", nav_mux_idx);
         add_channel(nav_drive_topic, drive_topic, nav_mux_idx);
 
+        int evader_mux_idx;
+        std::string evader_drive_topic;
+        n.getParam("evader_drive_topic", evader_drive_topic);
+        n.getParam("evader_mux_idx", evader_mux_idx);
+        add_channel(evader_drive_topic, drive_topic, evader_mux_idx);
+
         // ***Add a channel for a new planner here**
         // int new_mux_idx;
         // std::string new_drive_topic;
