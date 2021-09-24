@@ -37,9 +37,9 @@ public:
         n = ros::NodeHandle("~");
 
         std::string evader_drive_topic, odom_topic, scan_topic;
-        n.getParams("evader_drive_topic", drive_topic);
-        n.getParams("odom_topic", odom_topic);
-        n.getParams("scan_topic", scan_topic);
+        n.getParam("evader_drive_topic", evader_drive_topic);
+        n.getParam("odom_topic", odom_topic);
+        n.getParam("scan_topic", scan_topic);
 
         n.getParam("max_speed", max_speed);
         n.getParam("max_steering_angle", max_steering_angle);
@@ -48,12 +48,12 @@ public:
         drive_pub = n.advertise<ackermann_msgs::AckermannDriveStamped>(evader_drive_topic, 10);
 
         // Subs
-        odom_sub = n.subscribe(odom_topic, 1, &Evader::odom_callback, this);
-        scan_sub = n.subscribe(scan_topic, 1, &Evader::scan_callback, this);
+        // odom_sub = n.subscribe(odom_topic, 1, &Evader::odom_callback, this);
+        // scan_sub = n.subscribe(scan_topic, 1, &Evader::scan_callback, this);
 
     }
 
-    void odom_callback(){
+    void odom_callback(const nav_msgs::Odometry & msg){
 
         ackermann_msgs::AckermannDriveStamped drive_st_msg;
         ackermann_msgs::AckermannDrive drive_msg;
@@ -90,6 +90,7 @@ public:
     }
 
     void scan_callback() {
+        // argument should be like const sensor_msgs::..
         // Here when something is very close we need to stop (set speed to zero) and then invoke odom_callback somehow.
     }
 };

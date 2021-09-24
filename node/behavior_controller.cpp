@@ -130,7 +130,7 @@ public:
         n.getParam("random_walk_button_idx", random_walk_button_idx);
         n.getParam("brake_button_idx", brake_button_idx);
         n.getParam("nav_button_idx", nav_button_idx);
-        n.getParam("evader_button_idx", evader_button_idx)
+        n.getParam("evader_button_idx", evader_button_idx);
         // ***Add button index for new planner here***
         // n.getParam("new_button_idx", new_button_idx);
 
@@ -140,7 +140,7 @@ public:
         n.getParam("random_walk_key_char", random_walk_key_char);
         n.getParam("brake_key_char", brake_key_char);
         n.getParam("nav_key_char", nav_key_char);
-        n.getParam("evader_key_char", evader_key_char)
+        n.getParam("evader_key_char", evader_key_char);
         // ***Add key char for new planner here***
         // n.getParam("new_key_char", new_key_char);
 
