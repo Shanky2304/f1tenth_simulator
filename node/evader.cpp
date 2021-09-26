@@ -10,6 +10,8 @@
 
 #include "nav_msgs/Odometry.h"
 
+#include "sensor_msgs/LaserScan.h"
+
 // for printing
 #include <iostream>
 
@@ -21,6 +23,8 @@ private:
     ros::NodeHandle n;
 
     double max_speed, max_steering_angle;
+
+    float safe_distance_threshold = 1.0;
 
     // Listen for odom & laser scan messages
     ros::Subscriber odom_sub, scan_sub;
@@ -48,16 +52,65 @@ public:
         drive_pub = n.advertise<ackermann_msgs::AckermannDriveStamped>(evader_drive_topic, 10);
 
         // Subs
-        // odom_sub = n.subscribe(odom_topic, 1, &Evader::odom_callback, this);
-        // scan_sub = n.subscribe(scan_topic, 1, &Evader::scan_callback, this);
+        // odom_sub = n.subscribe(odom_topic, 1, &Evader::random_odom_callback, this);
+        scan_sub = n.subscribe(scan_topic, 1, &Evader::scan_callback, this);
 
     }
 
-    void odom_callback(const nav_msgs::Odometry & msg){
+    void random_odom_callback(const nav_msgs::Odometry & msg){
 
         ackermann_msgs::AckermannDriveStamped drive_st_msg;
         ackermann_msgs::AckermannDrive drive_msg;
 
+        drive_msg = get_random_drive();
+
+        // set drive message in drive stamped message
+        drive_st_msg.drive = drive_msg;
+
+        // publish AckermannDriveStamped message to drive topic
+        drive_pub.publish(drive_st_msg);
+    }
+
+    void scan_callback(const sensor_msgs::LaserScan& lc_msg) {
+        // Here when something is very close we need to stop (set speed to zero) and then invoke odom_callback somehow.
+        ackermann_msgs::AckermannDriveStamped drive_st_msg;
+        ackermann_msgs::AckermannDrive drive_msg;
+
+        int num_of_beams = lc_msg.ranges.size();
+        float ranges_[num_of_beams];
+
+
+        for (int i = 0; i < num_of_beams; i++) {
+            if (lc_msg.ranges[i] < safe_distance_threshold) {
+                // collision about to happen set drive to 0.
+                stop_car();
+                // call random walker logic to get new Ackermann drive
+                nav_msgs::Odometry dummy;
+                random_odom_callback(dummy);
+                break;
+            }
+        }
+
+    }
+
+    void stop_car() {
+        ackermann_msgs::AckermannDriveStamped drive_st_msg;
+        ackermann_msgs::AckermannDrive drive_msg;
+
+        drive_msg.speed = 0.0;
+        drive_msg.acceleration = 0.0;
+        drive_msg.steering_angle = 0.0;
+        drive_msg.steering_angle_velocity = 0.0;
+
+        // set drive message in drive stamped message
+        drive_st_msg.drive = drive_msg;
+
+        // publish AckermannDriveStamped message to drive topic
+        drive_pub.publish(drive_st_msg);
+    }
+
+    ackermann_msgs::AckermannDrive get_random_drive() {
+        ackermann_msgs::AckermannDrive drive_msg;
         drive_msg.speed = 2.0;
 
         /// STEERING ANGLE CALCULATION
@@ -82,16 +135,7 @@ public:
         // reset previous desired angle
         prev_angle = drive_msg.steering_angle;
 
-        // set drive message in drive stamped message
-        drive_st_msg.drive = drive_msg;
-
-        // publish AckermannDriveStamped message to drive topic
-        drive_pub.publish(drive_st_msg);
-    }
-
-    void scan_callback() {
-        // argument should be like const sensor_msgs::..
-        // Here when something is very close we need to stop (set speed to zero) and then invoke odom_callback somehow.
+        return drive_msg;
     }
 };
 
