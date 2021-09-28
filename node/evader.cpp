@@ -24,10 +24,10 @@ private:
 
     double max_speed, max_steering_angle;
 
-    float safe_distance_threshold = 1.0;
+    float safe_distance_threshold = 0.3;
 
     // Listen for odom & laser scan messages
-    ros::Subscriber odom_sub, scan_sub;
+    ros::Subscriber scan_sub;
 
     // Publish drive data
     ros::Publisher drive_pub;
@@ -35,10 +35,16 @@ private:
     // previous desired steering angle
     double prev_angle=0.0;
 
+    bool first_run = true;
+
 public:
     Evader() {
 
+        // Private node handle
         n = ros::NodeHandle("~");
+
+        ackermann_msgs::AckermannDriveStamped drive_st_msg;
+        ackermann_msgs::AckermannDrive drive_msg;
 
         std::string evader_drive_topic, odom_topic, scan_topic;
         n.getParam("evader_drive_topic", evader_drive_topic);
@@ -49,7 +55,7 @@ public:
         n.getParam("max_steering_angle", max_steering_angle);
 
         // Pub
-        drive_pub = n.advertise<ackermann_msgs::AckermannDriveStamped>(evader_drive_topic, 10);
+        drive_pub = n.advertise<ackermann_msgs::AckermannDriveStamped>(evader_drive_topic, 10, true);
 
         // Subs
         // odom_sub = n.subscribe(odom_topic, 1, &Evader::random_odom_callback, this);
@@ -57,8 +63,7 @@ public:
 
     }
 
-    void random_odom_callback(const nav_msgs::Odometry & msg){
-
+    void publish_random_drive() {
         ackermann_msgs::AckermannDriveStamped drive_st_msg;
         ackermann_msgs::AckermannDrive drive_msg;
 
@@ -71,22 +76,33 @@ public:
         drive_pub.publish(drive_st_msg);
     }
 
-    void scan_callback(const sensor_msgs::LaserScan& lc_msg) {
+    void scan_callback(const sensor_msgs::LaserScan & lc_msg) {
         // Here when something is very close we need to stop (set speed to zero) and then invoke odom_callback somehow.
         ackermann_msgs::AckermannDriveStamped drive_st_msg;
         ackermann_msgs::AckermannDrive drive_msg;
 
+        if (first_run) {
+            first_run = false;
+            drive_msg.speed = 2.0;
+            drive_msg.steering_angle = 0.0;
+
+            // set drive message in drive stamped message
+            drive_st_msg.drive = drive_msg;
+
+            // publish AckermannDriveStamped message to drive topic
+            drive_pub.publish(drive_st_msg);
+        }
+
         int num_of_beams = lc_msg.ranges.size();
-        float ranges_[num_of_beams];
 
-
+        // For each beam reading make a decision
         for (int i = 0; i < num_of_beams; i++) {
             if (lc_msg.ranges[i] < safe_distance_threshold) {
                 // collision about to happen set drive to 0.
-                stop_car();
+                // ROS_INFO_STREAM("We need to stop" << lc_msg.ranges[i]);
+                // stop_car();
                 // call random walker logic to get new Ackermann drive
-                nav_msgs::Odometry dummy;
-                random_odom_callback(dummy);
+                publish_random_drive();
                 break;
             }
         }
@@ -98,7 +114,7 @@ public:
         ackermann_msgs::AckermannDrive drive_msg;
 
         drive_msg.speed = 0.0;
-        drive_msg.acceleration = 0.0;
+        drive_msg.acceleration = -10.0;
         drive_msg.steering_angle = 0.0;
         drive_msg.steering_angle_velocity = 0.0;
 
