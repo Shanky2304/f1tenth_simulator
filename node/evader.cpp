@@ -24,7 +24,7 @@ private:
 
     double max_speed, max_steering_angle;
 
-    double safe_distance_threshold = 0.6;
+    double safe_distance_threshold = 1;
 
     // Listen for odom & laser scan messages
     ros::Subscriber scan_sub;
@@ -79,18 +79,15 @@ public:
     }
 
     void scan_callback(const sensor_msgs::LaserScan & lc_msg) {
-        
-	if (turn++ % 5 != 0) {
-            return;
-        }   
-    ROS_INFO_STREAM((turn-1) << "th turn.");
+           
+    // ROS_INFO_STREAM((turn-1) << "th turn.");
 	ackermann_msgs::AckermannDriveStamped drive_st_msg;
     ackermann_msgs::AckermannDrive drive_msg;
     int num_of_beams = lc_msg.ranges.size();
-	ROS_INFO_STREAM("num of beams = "<<num_of_beams);
+	// ROS_INFO_STREAM("num of beams = "<<num_of_beams);
 	int max_range_index = std::max_element(lc_msg.ranges.begin(), lc_msg.ranges.end()) - lc_msg.ranges.begin();
 	double ang_incr = lc_msg.angle_increment;
-	ROS_INFO_STREAM("Almost half of num_beams = "<<max_steering_angle<<" "<<max_range_index);
+	// ROS_INFO_STREAM("Almost half of num_beams = "<<max_steering_angle<<" "<<max_range_index);
 //        int k = 0;
 //        double blocked_paths_incr[num_of_beams];
 //
@@ -130,8 +127,7 @@ public:
         // For each beam reading make a decision
         for (int i = 0; i < num_of_beams; i++) {
             if (lc_msg.ranges[i] < safe_distance_threshold) {
-                // collision about to happen set drive to 0.
-                ROS_INFO_STREAM("Max range = " << lc_msg.ranges[max_range_index]);
+		// collision about to happen set drive to 0.
                 stop_car();
                 // call random walker logic to get new Ackermann drive
                 publish_random_drive(max_range_index, ang_incr);
@@ -187,8 +183,8 @@ public:
 
         double steering_angle = std::min(std::max(-max_steering_angle + (max_range_index * ang_incr), -max_steering_angle)
                 , max_steering_angle);
-	ROS_INFO_STREAM(max_range_index<<" is max range index; "<<ang_incr<<" is ang_incr.");
-        ROS_INFO_STREAM("Steering angle decided = "<<steering_angle);
+//	ROS_INFO_STREAM(max_range_index<<" is max range index; "<<ang_incr<<" is ang_incr.");
+//        ROS_INFO_STREAM("Steering angle decided = "<<steering_angle);
         drive_msg.steering_angle = steering_angle;
 
         return drive_msg;
