@@ -83,10 +83,10 @@ public:
 	if (turn++ % 5 != 0) {
             return;
         }   
-        ROS_INFO_STREAM((turn-1) << "th turn.");	
+    ROS_INFO_STREAM((turn-1) << "th turn.");
 	ackermann_msgs::AckermannDriveStamped drive_st_msg;
-        ackermann_msgs::AckermannDrive drive_msg;
-        int num_of_beams = lc_msg.ranges.size();
+    ackermann_msgs::AckermannDrive drive_msg;
+    int num_of_beams = lc_msg.ranges.size();
 	ROS_INFO_STREAM("num of beams = "<<num_of_beams);
 	int max_range_index = std::max_element(lc_msg.ranges.begin(), lc_msg.ranges.end()) - lc_msg.ranges.begin();
 	double ang_incr = lc_msg.angle_increment;
@@ -185,7 +185,7 @@ public:
 //
 //        }
 
-        double steering_angle = std::min(std::max(-max_steering_angle + (((int)max_range_index/2) * ang_incr), -max_steering_angle)
+        double steering_angle = std::min(std::max(-max_steering_angle + (max_range_index * ang_incr), -max_steering_angle)
                 , max_steering_angle);
 	ROS_INFO_STREAM(max_range_index<<" is max range index; "<<ang_incr<<" is ang_incr.");
         ROS_INFO_STREAM("Steering angle decided = "<<steering_angle);
